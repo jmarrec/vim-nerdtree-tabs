@@ -336,7 +336,17 @@ endfun
 " buffer that's left is the NERDTree buffer
 fun! s:CloseIfOnlyNerdTreeLeft()
   if exists("t:NERDTreeBufName") && bufwinnr(t:NERDTreeBufName) != -1 && winnr("$") == 1
-    q
+    if has('patch-9.0.907')
+      " Vim forbids closing the window inside an autocommand
+      " Ref: https://groups.google.com/g/vim_dev/c/Cw8McBH6DDM?pli=1
+      " So let's do it afterwards. Solution came from @mattmartini
+      " Ref: https://github.com/jistr/vim-nerdtree-tabs/issues/102
+      call timer_start(1, {-> execute('q') }) " close buffer after we exit autocmd
+      call timer_start(20, {-> execute('vertical resize 31') }) " window sizing is goofed up, so fix it
+      call timer_start(25, {-> execute('wincmd w') }) " shift focus from NerdTree window to buffer window
+    else
+      q
+    endif
   endif
 endfun
 
